@@ -9,6 +9,8 @@ import BarsSvg from "../../images/bars-solid.svg";
 import { useRouter } from "next/router";
 import Nav from "../../components/Nav";
 
+import styles from "../../styles/EditRanking.module.scss";
+
 interface IDraggableMovieProps {
   movie: Movie<string>;
   index: number;
@@ -125,12 +127,7 @@ const DraggableMovie: FC<IDraggableMovieProps> = ({
         <Image src={BarsSvg} />
       </span>
       {showRank && (
-        <span
-          className="tag is-light"
-          style={{ minWidth: "2rem", marginRight: "1rem" }}
-        >
-          {index + 1}
-        </span>
+        <span className={`tag is-light ${styles.rankTag}`}>{index + 1}</span>
       )}
       {movie.title}
       <span className="ml-2 has-text-grey">{movie.year}</span>
@@ -310,14 +307,7 @@ const EditRanking: FC<IEditRankingProps> = ({
             Click the <strong>Save changes</strong> button when you&apos;re
             done.
           </h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gridColumnGap: "20px",
-              alignItems: "flex-start",
-            }}
-          >
+          <div className={styles.grid}>
             <nav className="panel is-primary">
               <p className="panel-heading">Your ranked movies</p>
               {rankedMovies.length === 0 ? (
