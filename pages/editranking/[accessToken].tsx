@@ -6,6 +6,8 @@ import { getMovieRankingsForAccessToken } from "../api/ranking";
 import Head from "next/head";
 import { DropTargetMonitor, useDrag, useDrop, XYCoord } from "react-dnd";
 import BarsSvg from "../../images/bars-solid.svg";
+import { useRouter } from "next/router";
+import Nav from "../../components/Nav";
 
 interface IDraggableMovieProps {
   movie: Movie<string>;
@@ -140,16 +142,20 @@ interface IEditRankingProps {
   accessToken: string;
   rankedMovies: Movie<string>[];
   unrankedMovies: Movie<string>[];
+  userName: string;
 }
 
 const EditRanking: FC<IEditRankingProps> = ({
   accessToken,
+  userName,
   rankedMovies: originalRankedMovies,
   unrankedMovies: originalUnrankedMovies,
 }) => {
   const [rankedMovies, setRankedMovies] = useState(originalRankedMovies);
   const [unrankedMovies, setUnrankedMovies] = useState(originalUnrankedMovies);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [backLoading, setBackLoading] = useState(false);
+  const router = useRouter();
 
   const moveMovieFunc =
     (ranked: boolean) =>
@@ -256,8 +262,9 @@ const EditRanking: FC<IEditRankingProps> = ({
         },
         body: JSON.stringify(rankedMovies.map((m) => m._id)),
       });
-      alert("done!");
-      setSubmitLoading(false);
+
+      // Then take the user back to the home page to see results
+      router.push("/");
     } catch (e) {
       setSubmitLoading(false);
       console.error(e);
@@ -270,33 +277,34 @@ const EditRanking: FC<IEditRankingProps> = ({
       <Head>
         <title>Movie Ranking</title>
       </Head>
-      <nav className="navbar is-spaced has-shadow" role="navigation">
-        <div className="container">
-          <div className="navbar-brand">
-            <div className="navbar-item">
-              <h1 className="title">🍿 Movie Night 🍿</h1>
+      <Nav
+        rightSection={
+          <div className="navbar-item">
+            <div className="buttons">
+              <a
+                className={`button is-light ${backLoading ? "is-loading" : ""}`}
+                onClick={() => {
+                  setBackLoading(true);
+                  router.push("/");
+                }}
+              >
+                Back to Rankings
+              </a>
+              <a
+                className={`button is-primary ${
+                  submitLoading ? "is-loading" : ""
+                }`}
+                onClick={submitRankings}
+              >
+                Save changes
+              </a>
             </div>
           </div>
-          <div className="navbar-end">
-            <div className="navbar-item">
-              <div className="buttons">
-                <a className="button is-light">Back to Rankings</a>
-                <a
-                  className={`button is-primary ${
-                    submitLoading ? "is-loading" : ""
-                  }`}
-                  onClick={submitRankings}
-                >
-                  Save changes
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+        }
+      />
       <section className="section">
         <div className="container">
-          <h1 className="title">Rank your movies</h1>
+          <h1 className="title">Hi, {userName}! Rank your movies</h1>
           <h2 className="subtitle">
             Drag any movies you&apos;ve seen into the left column to rank them.
             Click the <strong>Save changes</strong> button when you&apos;re

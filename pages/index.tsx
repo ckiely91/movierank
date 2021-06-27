@@ -1,55 +1,136 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { FC, useRef, useState } from "react";
+import Nav from "../components/Nav";
+import {
+  getAllMoviesWithUserRankings,
+  getAllMoviesWithUserRankingsResp,
+} from "./api/allrankings";
+import { GetServerSideProps } from "next";
+import Image from "next/image";
+import ArrowUpSvg from "../images/arrow-up-solid.svg";
 
-export default function Home() {
+import styles from "../styles/Home.module.scss";
+
+interface IHomeProps extends getAllMoviesWithUserRankingsResp {}
+
+const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
   const router = useRouter();
   const [accessToken, setAccessToken] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
   return (
     <div>
       <Head>
         <title>Movie Ranking</title>
       </Head>
-      <div className="container">
-        <section className="hero is-primary">
-          <div className="hero-body">
-            <p className="title">Movie Ranking</p>
-            <p className="subtitle">To continue, enter your access token</p>
-          </div>
-        </section>
-        <section className="section">
+      <Nav
+        rightSection={
           <form
             onSubmit={(e) => {
               e.preventDefault();
               setLoading(true);
-              router.push(`/${accessToken}`);
+              router.push(`/editranking/${accessToken}`);
             }}
           >
-            <div className="field">
-              <div className="control">
+            <div className="field has-addons">
+              <p className="control">
                 <input
-                  type="text"
+                  ref={inputRef}
                   className="input"
-                  placeholder="Access token"
+                  type="text"
+                  placeholder="Enter access token"
                   value={accessToken}
                   onChange={(e) => setAccessToken(e.target.value)}
                 />
-              </div>
-            </div>
-            <div className="field">
-              <div className="control">
+              </p>
+              <p className="control">
                 <button
-                  className={`button is-primary ${loading ? "is-loading" : ""}`}
                   type="submit"
+                  disabled={!accessToken}
+                  className={`button ${loading ? "is-loading" : ""}`}
                 >
-                  Continue
+                  Edit ranking
                 </button>
-              </div>
+              </p>
             </div>
           </form>
-        </section>
-      </div>
+        }
+      />
+      <section className="section">
+        <div className="container">
+          <h1 className="title">Current rankings</h1>
+          <h2 className="subtitle">
+            As each participant submits their movie rankings, this list will
+            automatically update. It represents the average of all rankings. To
+            get started,{" "}
+            <a onClick={() => inputRef.current?.focus()}>
+              enter your access code
+            </a>{" "}
+            above.
+          </h2>
+        </div>
+      </section>
+      <section className="section">
+        <div className="container is-max-desktop">
+          <nav className="panel is-primary">
+            <p className="panel-heading">Results</p>
+            {rankedMovies.map((m, i) => (
+              <div className="panel-block" key={m._id}>
+                <span
+                  className="tag is-light"
+                  style={{ minWidth: "2rem", marginRight: "1rem" }}
+                >
+                  {i + 1}
+                </span>
+                {m.title}
+                <span className="ml-2 has-text-grey">{m.year}</span>
+                <div className="field is-grouped is-grouped-multiline ml-auto">
+                  {m.userRankings.map((r) => (
+                    <div className="control" key={r.userName}>
+                      <div className="tags has-addons">
+                        {r.rankingIndex < i ? (
+                          <span className="tag is-success">
+                            <span className={`icon ${styles.tagIcon}`}>
+                              <Image src={ArrowUpSvg} />
+                            </span>
+                          </span>
+                        ) : r.rankingIndex > i ? (
+                          <span className="tag is-danger">
+                            <span
+                              className={`icon ${styles.tagIcon} ${styles.tagFlip}`}
+                            >
+                              <Image src={ArrowUpSvg} />
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="tag is-info">-</span>
+                        )}
+                        <span className="tag is-light">
+                          {r.userName} ({r.rankingIndex + 1}/{r.rankedOutOf})
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+        </div>
+      </section>
     </div>
   );
-}
+};
+
+export default Home;
+
+export const getServerSideProps: GetServerSideProps<IHomeProps> = async (_) => {
+  const props = await getAllMoviesWithUserRankings();
+  return {
+    props: {
+      ...props,
+    },
+  };
+};

@@ -21,6 +21,7 @@ export default async function handler(
 export interface RankingGetResp {
   rankedMovies: Movie<string>[];
   unrankedMovies: Movie<string>[];
+  userName: string;
 }
 
 export const getMovieRankingsForAccessToken = async (
@@ -37,7 +38,7 @@ export const getMovieRankingsForAccessToken = async (
 
     // Get the full list of movies, and also the rankings for this user
     const [allMovies, ranking] = await Promise.all([
-      await db
+      db
         .collection<Movie<ObjectID>>(MovieCollection)
         .find(
           {},
@@ -48,7 +49,7 @@ export const getMovieRankingsForAccessToken = async (
           }
         )
         .toArray(),
-      await db.collection<Ranking<ObjectID>>(RankingCollection).findOne({
+      db.collection<Ranking<ObjectID>>(RankingCollection).findOne({
         userId: user._id,
       }),
     ]);
@@ -58,6 +59,7 @@ export const getMovieRankingsForAccessToken = async (
       return {
         rankedMovies: [],
         unrankedMovies: allMovies.map((m) => ({ ...m, _id: m._id.toString() })),
+        userName: user.name,
       };
     }
 
@@ -102,6 +104,7 @@ export const getMovieRankingsForAccessToken = async (
     return {
       rankedMovies,
       unrankedMovies,
+      userName: user.name,
     };
   });
 };
