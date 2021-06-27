@@ -7,12 +7,13 @@ import { User, UserCollection } from "../../db/userCollection";
 
 interface userRanking {
   userName: string;
-  rankingIndex: number;
-  rankedOutOf: number;
+  rankPct: number;
+  rankNumber: number;
+  rankOutOf: number;
 }
 
 export interface MovieWithUserRankings extends Movie<string> {
-  averageRankingIndex: number;
+  averageRanking: number;
   userRankings: userRanking[];
 }
 
@@ -54,7 +55,7 @@ export const getAllMoviesWithUserRankings =
             prev[next._id.toString()] = {
               ...next,
               _id: next._id.toString(),
-              averageRankingIndex: -1,
+              averageRanking: 0,
               userRankings: [],
             };
             return prev;
@@ -77,8 +78,9 @@ export const getAllMoviesWithUserRankings =
             if (movieMap[movieIds[j].toString()]) {
               movieMap[movieIds[j].toString()].userRankings.push({
                 userName: user.name,
-                rankingIndex: j,
-                rankedOutOf: movieIds.length,
+                rankPct: movieIds.length > 1 ? j / (movieIds.length - 1) : 0,
+                rankNumber: j + 1,
+                rankOutOf: movieIds.length,
               });
             }
           }
@@ -94,16 +96,14 @@ export const getAllMoviesWithUserRankings =
           }
 
           const totalRank = movie.userRankings.reduce(
-            (prev, next) => prev + next.rankingIndex,
+            (prev, next) => prev + next.rankPct,
             0
           );
-          movie.averageRankingIndex = totalRank / movie.userRankings.length;
+          movie.averageRanking = totalRank / movie.userRankings.length;
           rankedMovies.push(movie);
         }
 
-        rankedMovies.sort(
-          (a, b) => a.averageRankingIndex - b.averageRankingIndex
-        );
+        rankedMovies.sort((a, b) => a.averageRanking - b.averageRanking);
         unrankedMovies.sort((a, b) => a.title.localeCompare(b.title));
 
         return {

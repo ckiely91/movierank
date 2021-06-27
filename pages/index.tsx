@@ -91,13 +91,13 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
                   {m.userRankings.map((r) => (
                     <div className="control" key={r.userName}>
                       <div className="tags has-addons">
-                        {r.rankingIndex < i ? (
+                        {r.rankPct < m.averageRanking ? (
                           <span className="tag is-success">
                             <span className={`icon ${styles.tagIcon}`}>
                               <Image src={ArrowUpSvg} />
                             </span>
                           </span>
-                        ) : r.rankingIndex > i ? (
+                        ) : r.rankPct > m.averageRanking ? (
                           <span className="tag is-danger">
                             <span
                               className={`icon ${styles.tagIcon} ${styles.tagFlip}`}
@@ -108,8 +108,11 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
                         ) : (
                           <span className="tag is-info">-</span>
                         )}
-                        <span className="tag is-light">
-                          {r.userName} ({r.rankingIndex + 1}/{r.rankedOutOf})
+                        <span
+                          className="tag is-light"
+                          title={r.rankPct.toString()}
+                        >
+                          {r.userName} ({r.rankNumber}/{r.rankOutOf})
                         </span>
                       </div>
                     </div>
