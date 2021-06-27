@@ -3,7 +3,7 @@ import { runMongoQuery } from "../../db/db";
 import { User, UserCollection } from "../../db/userCollection";
 import { Movie, MovieCollection } from "../../db/movieCollection";
 import { Ranking, RankingCollection } from "../../db/rankingCollection";
-import { ObjectID } from "mongodb";
+import { Db, ObjectID } from "mongodb";
 
 export default async function handler(
   req: NextApiRequest,
@@ -123,4 +123,50 @@ const handleGet = async (
 
 // POST request - the user wants to update their rankings. This endpoint simply takes
 // an array of movie IDs
-const handlePost = async (req: NextApiRequest, res: NextApiResponse) => {};
+const handlePost = async (req: NextApiRequest, res: NextApiResponse) => {
+  // First get the user by their access token
+  const { accessToken } = req.query;
+  if (!accessToken || Array.isArray(accessToken)) {
+    res.status(422).send("Access token required");
+    return;
+  }
+
+  // The body of the request should be a JSON formatted array of movie IDs.
+  const movieIds: string[] = req.body;
+  if (movieIds.some((m) => typeof m !== "string")) {
+    res.status(422).send(null);
+    return;
+  }
+
+  await runMongoQuery(async (db: Db): Promise<void> => {
+    const user = await db.collection<User<ObjectID>>(UserCollection).findOne({
+      accessToken: accessToken,
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const movieIdsAsObjectIds = movieIds.map(
+      (movieId) => new ObjectID(movieId)
+    );
+
+    // Upsert the user's rankings
+    await db.collection<Ranking<ObjectID>>(RankingCollection).updateOne(
+      {
+        userId: user._id,
+      },
+      {
+        $set: {
+          userId: user._id,
+          movieIds: movieIdsAsObjectIds,
+        },
+      },
+      {
+        upsert: true,
+      }
+    );
+  });
+
+  res.status(204).send(null);
+};
