@@ -4,6 +4,7 @@ import { runMongoQuery } from "../../db/db";
 import { Db, ObjectID } from "mongodb";
 import { Ranking, RankingCollection } from "../../db/rankingCollection";
 import { User, UserCollection } from "../../db/userCollection";
+import { Rating, rate } from "ts-trueskill";
 
 interface userRanking {
   userName: string;
@@ -14,7 +15,12 @@ interface userRanking {
 
 export interface MovieWithUserRankings extends Movie<string> {
   averageRanking: number;
+  trueskillMu: number;
   userRankings: userRanking[];
+}
+
+interface movieWithRating extends MovieWithUserRankings {
+  rating: Rating;
 }
 
 export interface getAllMoviesWithUserRankingsResp {
@@ -51,11 +57,13 @@ export const getAllMoviesWithUserRankings =
         ]);
 
         const movieMap = allMovies.reduce(
-          (prev: Record<string, MovieWithUserRankings>, next) => {
+          (prev: Record<string, movieWithRating>, next) => {
             prev[next._id.toString()] = {
               ...next,
               _id: next._id.toString(),
               averageRanking: 0,
+              trueskillMu: 0,
+              rating: new Rating(),
               userRankings: [],
             };
             return prev;
@@ -74,8 +82,11 @@ export const getAllMoviesWithUserRankings =
 
           userIds.push(user._id.toString());
 
+          const ratingGroups = [];
+
           for (let j = 0; j < movieIds.length; j++) {
             if (movieMap[movieIds[j].toString()]) {
+              ratingGroups.push([movieMap[movieIds[j].toString()].rating]);
               movieMap[movieIds[j].toString()].userRankings.push({
                 userName: user.name,
                 rankPct: movieIds.length > 1 ? j / (movieIds.length - 1) : 0,
@@ -84,12 +95,25 @@ export const getAllMoviesWithUserRankings =
               });
             }
           }
+
+          const newRatings = rate(ratingGroups);
+
+          // Assign the new ratings back to the movie map
+          for (let j = 0; j < movieIds.length; j++) {
+            if (movieMap[movieIds[j].toString()]) {
+              const [rating] = newRatings[j];
+              movieMap[movieIds[j].toString()].rating = rating;
+            }
+          }
         }
 
         const rankedMovies: MovieWithUserRankings[] = [];
         const unrankedMovies: MovieWithUserRankings[] = [];
 
-        for (const movie of Object.values(movieMap)) {
+        for (const origMovie of Object.values(movieMap)) {
+          const { rating, ...movie } = origMovie;
+          movie.trueskillMu = rating.mu;
+
           if (movie.userRankings.length === 0) {
             unrankedMovies.push(movie);
             continue;
@@ -103,8 +127,8 @@ export const getAllMoviesWithUserRankings =
           rankedMovies.push(movie);
         }
 
-        rankedMovies.sort((a, b) => a.averageRanking - b.averageRanking);
         unrankedMovies.sort((a, b) => a.title.localeCompare(b.title));
+        rankedMovies.sort((a, b) => b.trueskillMu - a.trueskillMu);
 
         return {
           userIds,

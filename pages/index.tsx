@@ -80,8 +80,8 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
             {rankedMovies.map((m, i) => (
               <div className="panel-block" key={m._id}>
                 <span
-                  className="tag is-light"
-                  style={{ minWidth: "2rem", marginRight: "1rem" }}
+                  className={`tag is-light ${styles.numberTag}`}
+                  title={m.trueskillMu.toString()}
                 >
                   {i + 1}
                 </span>
