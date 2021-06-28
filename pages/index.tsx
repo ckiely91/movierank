@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import Nav from "../components/Nav";
 import {
   getAllMoviesWithUserRankings,
@@ -21,6 +21,15 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (typeof localStorage !== "undefined") {
+      const storedAccessToken = localStorage.getItem("accessToken");
+      if (storedAccessToken) {
+        setAccessToken(storedAccessToken);
+      }
+    }
+  }, []);
+
   return (
     <div>
       <Head>
@@ -31,6 +40,9 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              if (typeof localStorage !== "undefined") {
+                localStorage.setItem("accessToken", accessToken);
+              }
               setLoading(true);
               router.push(`/editranking/${accessToken}`);
             }}
