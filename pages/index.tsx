@@ -91,7 +91,7 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
             <table className="table is-hoverable">
               <tbody>
                 {rankedMovies.map((m, i) => {
-                  const movieRankPct = i / rankedMovies.length;
+                  const movieRankPct = i / (rankedMovies.length - 1);
                   return (
                     <tr key={m._id}>
                       <td>
@@ -112,20 +112,18 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
                           return <td key={userId} />;
                         }
 
-                        const userRankPct =
-                          (ranking.rankNumber - 1) / ranking.rankOutOf;
                         return (
                           <td key={userId}>
                             <div
                               className={`tags has-addons ${styles.rankingTag}`}
                             >
-                              {userRankPct < movieRankPct ? (
+                              {ranking.rankPct < movieRankPct ? (
                                 <span className="tag is-success">
                                   <span className={`icon ${styles.tagIcon}`}>
                                     <Image src={ArrowUpSvg} />
                                   </span>
                                 </span>
-                              ) : userRankPct > movieRankPct ? (
+                              ) : ranking.rankPct > movieRankPct ? (
                                 <span className="tag is-danger">
                                   <span
                                     className={`icon ${styles.tagIcon} ${styles.tagFlip}`}
