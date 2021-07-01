@@ -8,6 +8,7 @@ import { Rating, rate } from "ts-trueskill";
 
 interface userRanking {
   userName: string;
+  userId: string;
   rankPct: number;
   rankNumber: number;
   rankOutOf: number;
@@ -89,6 +90,7 @@ export const getAllMoviesWithUserRankings =
               ratingGroups.push([movieMap[movieIds[j].toString()].rating]);
               movieMap[movieIds[j].toString()].userRankings.push({
                 userName: user.name,
+                userId: user._id.toString(),
                 rankPct: movieIds.length > 1 ? j / (movieIds.length - 1) : 0,
                 rankNumber: j + 1,
                 rankOutOf: movieIds.length,

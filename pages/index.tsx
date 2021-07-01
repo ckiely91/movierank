@@ -86,53 +86,70 @@ const Home: FC<IHomeProps> = ({ userIds, rankedMovies, unrankedMovies }) => {
         </div>
       </section>
       <section className="section">
-        <div className="container is-max-desktop">
-          <nav className="panel is-primary">
-            <p className="panel-heading">Results</p>
-            {rankedMovies.map((m, i) => (
-              <div className="panel-block" key={m._id}>
-                <span
-                  className={`tag is-light ${styles.numberTag}`}
-                  title={m.trueskillMu.toString()}
-                >
-                  {i + 1}
-                </span>
-                {m.title}
-                <span className="ml-2 has-text-grey">{m.year}</span>
-                <div className="field is-grouped is-grouped-multiline ml-auto">
-                  {m.userRankings.map((r) => (
-                    <div className="control" key={r.userName}>
-                      <div className="tags has-addons">
-                        {r.rankPct < m.averageRanking ? (
-                          <span className="tag is-success">
-                            <span className={`icon ${styles.tagIcon}`}>
-                              <Image src={ArrowUpSvg} />
-                            </span>
-                          </span>
-                        ) : r.rankPct > m.averageRanking ? (
-                          <span className="tag is-danger">
-                            <span
-                              className={`icon ${styles.tagIcon} ${styles.tagFlip}`}
-                            >
-                              <Image src={ArrowUpSvg} />
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="tag is-info">-</span>
-                        )}
+        <div className="container">
+          <div className="table-container">
+            <table className="table is-hoverable">
+              <tbody>
+                {rankedMovies.map((m, i) => {
+                  const movieRankPct = i / rankedMovies.length;
+                  return (
+                    <tr key={m._id}>
+                      <td>
                         <span
-                          className="tag is-light"
-                          title={r.rankPct.toString()}
+                          className={`tag is-light ${styles.numberTag}`}
+                          title={m.trueskillMu.toString()}
                         >
-                          {r.userName} ({r.rankNumber}/{r.rankOutOf})
+                          {i + 1}
                         </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </nav>
+                        {m.title}
+                        <span className="ml-2 has-text-grey">{m.year}</span>
+                      </td>
+                      {userIds.map((userId) => {
+                        const ranking = m.userRankings.find(
+                          (r) => r.userId === userId
+                        );
+                        if (!ranking) {
+                          return <td key={userId} />;
+                        }
+
+                        const userRankPct =
+                          (ranking.rankNumber - 1) / ranking.rankOutOf;
+                        return (
+                          <td key={userId}>
+                            <div
+                              className={`tags has-addons ${styles.rankingTag}`}
+                            >
+                              {userRankPct < movieRankPct ? (
+                                <span className="tag is-success">
+                                  <span className={`icon ${styles.tagIcon}`}>
+                                    <Image src={ArrowUpSvg} />
+                                  </span>
+                                </span>
+                              ) : userRankPct > movieRankPct ? (
+                                <span className="tag is-danger">
+                                  <span
+                                    className={`icon ${styles.tagIcon} ${styles.tagFlip}`}
+                                  >
+                                    <Image src={ArrowUpSvg} />
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="tag is-info">-</span>
+                              )}
+                              <span className="tag is-light">
+                                {ranking.userName} ({ranking.rankNumber}/
+                                {ranking.rankOutOf})
+                              </span>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>
